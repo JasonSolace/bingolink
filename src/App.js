@@ -1,8 +1,9 @@
 // src/App.js
 import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CreateCardPage from "./pages/CreateCardPage";
-import BingoCardPage from "./pages/BingoCardPage";
+import LandingPage from "./pages/LandingPage"; // Make sure this import is correct
+import BingoCardPage from "./pages/BingoCardPage"; // If you have this component
 
 const App = () => {
 	const [allBingoCards, setAllBingoCards] = useState([]);
@@ -10,8 +11,9 @@ const App = () => {
 	return (
 		<Router>
 			<Routes>
+				<Route path="/" element={<LandingPage />} />
 				<Route
-					path="/"
+					path="/create"
 					element={<CreateCardPage setAllBingoCards={setAllBingoCards} />}
 				/>
 				<Route

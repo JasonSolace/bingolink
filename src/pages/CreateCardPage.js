@@ -11,10 +11,9 @@ import {
 	Paper,
 	TextField,
 } from "@mui/material";
-import { Link } from "react-router-dom"; // Import Link from React Router
+import { Link } from "react-router-dom";
 
 const CreateCardPage = ({ setAllBingoCards }) => {
-	// Default text to be shown in the textarea
 	const defaultText = `
   Breaking Bad
   Dexter
@@ -45,7 +44,9 @@ const CreateCardPage = ({ setAllBingoCards }) => {
 	const [text, setText] = useState(defaultText);
 	const [includeFreeSpace, setIncludeFreeSpace] = useState(true);
 	const [numLinks, setNumLinks] = useState(2);
+	const [templateBingoCard, setTemplateBingoCard] = useState([]); // New state for the template card
 	const [allBingoCards, setLocalBingoCards] = useState([]);
+	const [generatedLinks, setGeneratedLinks] = useState([]);
 
 	// Handle changes in the textarea
 	const handleChange = (event) => {
@@ -63,6 +64,22 @@ const CreateCardPage = ({ setAllBingoCards }) => {
 		setNumLinks(value);
 	};
 
+	// Update the template Bingo card whenever text or checkbox changes
+	useEffect(() => {
+		let items = text
+			.trim()
+			.split("\n")
+			.map((item) => item.trim())
+			.filter((item) => item.length > 0);
+
+		// Limit to the first 24 items and create a non-randomized card
+		items = items.slice(0, 24);
+		if (includeFreeSpace) {
+			items.splice(12, 0, "Free Space");
+		}
+		setTemplateBingoCard(items.slice(0, 25)); // Update the template card
+	}, [text, includeFreeSpace]); // Runs whenever the text or checkbox changes
+
 	// Randomize items for a single Bingo card
 	const generateBingoCard = (items) => {
 		const shuffledItems = [...items].sort(() => Math.random() - 0.5);
@@ -72,8 +89,8 @@ const CreateCardPage = ({ setAllBingoCards }) => {
 		return shuffledItems.slice(0, 25);
 	};
 
-	// Update bingo cards whenever text, checkbox, or numLinks changes
-	useEffect(() => {
+	// Generate links and randomize bingo cards when the button is clicked
+	const handleGenerateBingoCards = () => {
 		let items = text
 			.trim()
 			.split("\n")
@@ -81,15 +98,21 @@ const CreateCardPage = ({ setAllBingoCards }) => {
 			.filter((item) => item.length > 0);
 
 		items = items.slice(0, 24); // Limit to the first 24 items
-		const newBingoCards = [];
 
+		const newBingoCards = [];
 		for (let i = 0; i < numLinks; i++) {
 			newBingoCards.push(generateBingoCard(items));
 		}
 
 		setLocalBingoCards(newBingoCards);
 		setAllBingoCards(newBingoCards); // Update the parent state
-	}, [text, includeFreeSpace, numLinks, setAllBingoCards]);
+
+		const links = Array.from(
+			{ length: numLinks },
+			(_, index) => `/bingo/${index + 1}`
+		);
+		setGeneratedLinks(links);
+	};
 
 	return (
 		<Box sx={{ display: "flex", p: 3 }}>
@@ -122,27 +145,32 @@ const CreateCardPage = ({ setAllBingoCards }) => {
 					inputProps={{ min: 2, max: 10 }}
 					sx={{ mt: 2, width: "100%" }}
 				/>
-				<Button variant="contained" color="primary" sx={{ mt: 2 }}>
+				<Button
+					variant="contained"
+					color="primary"
+					onClick={handleGenerateBingoCards} // Call the link generation function on click
+					sx={{ mt: 2 }}
+				>
 					Generate Bingo Cards
 				</Button>
 				{/* Display links to the generated Bingo cards */}
 				<Box sx={{ mt: 2 }}>
-					{Array.from({ length: numLinks }, (_, index) => (
+					{generatedLinks.map((link, index) => (
 						<Box key={index}>
-							<Link to={`/bingo/${index + 1}`}>Bingo Card #{index + 1}</Link>
+							<Link to={link}>Bingo Card #{index + 1}</Link>
 						</Box>
 					))}
 				</Box>
 			</Box>
 
-			{/* Right side: Dynamic Bingo card preview */}
+			{/* Right side: Static Bingo card template preview */}
 			<Box sx={{ flex: 1, pl: 2 }}>
 				<Typography variant="h5" gutterBottom>
 					Your Bingo Card
 				</Typography>
 				<Grid container spacing={1}>
-					{allBingoCards.length > 0 &&
-						allBingoCards[0].map((item, index) => (
+					{templateBingoCard.length > 0 &&
+						templateBingoCard.map((item, index) => (
 							<Grid item xs={2.4} key={index}>
 								<Paper sx={{ p: 2, textAlign: "center" }}>{item}</Paper>
 							</Grid>
